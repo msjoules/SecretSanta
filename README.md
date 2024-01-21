@@ -1,4 +1,4 @@
-# Secret Santa Generator & Automated Emailing
+# Secret Santa Generator With Automated Emailing
 
 Randomizing players to Secret Santa is a very straight forward process that is easily accomplished using Python.  This code does exactly that but also:
 
