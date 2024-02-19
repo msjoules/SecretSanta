@@ -125,7 +125,6 @@ while start_program:
             "To keep the list a secret, the results will not be printed.\n")
         input("Hit the 'Enter' key when you're ready: ")
 
-        santa = SecretSanta(names)
         santas = santa.pair_players()
 
         print('\n\nYou can now print out the Santa-Player pairs.\n'
