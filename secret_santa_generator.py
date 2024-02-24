@@ -9,6 +9,10 @@ There are two ways you can get player names:
 
 import pandas as pd
 import os
+import json
+import platform
+from datetime import datetime
+from pathlib import Path
 from santa import SecretSanta 
 
 os.system('clear')
@@ -26,38 +30,45 @@ while start_program:
         print('\nOk. Bye!')
         break
     elif proceed.lower() == 'yes':
-        print('''\n\nThere are two ways you can get player names:
+        print('''\n\nThere are three ways you can get player names:
         1) Generate names from an Excel document where each player has his/her own sheet
-        2) Manually entering each player name\n\n''')
+        2) Generate names from a json file
+        3) Manually entering each player name\n\n''')
         
         # Import player names or manually enter them
         while True:
             player_entry = input("\nEnter '1' for Excel Spreadsheet\n"
-                                "Enter '2' to enter names manually\n"
-                                "Enter '3' to exit the program\n"
+                                "Enter '2' for json file\n"
+                                "Enter '3' to enter names manually\n"
+                                "Enter '4' to exit the program\n"
                                 "What is your choice?  ").strip()
             
-            if player_entry == '3':
+            if player_entry == '4':
                 print('\nUser request to EXIT.')
                 start_program = False
                 break
             
             # Option 1: Import names from Excel spreadsheet
-            elif player_entry == '1':
-                try:
-                    filepath = input('\nEnter the complete path to the spreadsheet '
-                    '(e.g., /home/user/secretsanta.excel or '
-                    'C:\\Documents\\secretsanta.excel)\n'
-                    'Path:  ').strip()
+            elif player_entry == '1':             
+                filepath = input('\nEnter the complete path to the spreadsheet '
+                '(e.g., /home/user/secretsanta.xlsx or '
+                'C:\\Documents\\secretsanta.xlsx)\n'
+                'Path:  ').strip()
 
-                    print(f'\nUser entered path to Excel document: {filepath}\n')
+                print(f'\nUser entered path to Excel document: {filepath}\n')
+                
+                if (filepath.startswith('"') and filepath.endswith('"')) or \
+                    (filepath.startswith("'") and filepath.endswith("'")):
                     
-                    if (filepath.startswith('"') and filepath.endswith('"')) or \
-                        (filepath.startswith("'") and filepath.endswith("'")):
-                        
-                        filepath = filepath[1:-1]
-
+                    filepath = filepath[1:-1]
+                    
+                try:
                     db = pd.ExcelFile(filepath)
+                # Handle exception
+                except:
+                    print('You must have entered something incorrectly.  '
+                          'Please verify the path and try again.')
+                else:
                     names = db.sheet_names
                     names = [names[i].capitalize() for i in range(len(names))]
 
@@ -66,12 +77,37 @@ while start_program:
                         print(f'{i}: {v}')
                     break
 
+            # Option 2: Import names from a json file
+            elif player_entry == '2':             
+                filepath = input('\nEnter the complete path to the json file '
+                '(e.g., /home/user/secretsanta.json or '
+                'C:\\Documents\\secretsanta.json)\n'
+                'Path:  ').strip()
+
+                print(f'\nUser entered path to json file: {filepath}\n')
+                
+                if (filepath.startswith('"') and filepath.endswith('"')) or \
+                    (filepath.startswith("'") and filepath.endswith("'")):
+                    
+                    filepath = filepath[1:-1]
+                    
+                try:
+                    db = Path(filepath).read_text()
                 # Handle exception
                 except:
-                    print('You must have entered something incorrectly. Try again.')
+                    print('You must have entered something incorrectly.  '
+                          'Please verify the path and try again.')
+                else:
+                    names = json.loads(db)
+                    names = [names[i].capitalize() for i in range(len(names))]
 
-            # Option 2: Manually enter names        
-            elif player_entry == '2':
+                    print(f'\nThere are a total {len(names)} people playing.\n')
+                    for i, v in enumerate(names):
+                        print(f'{i}: {v}')
+                    break
+
+            # Option 3: Manually enter names        
+            elif player_entry == '3':
                 print("\nYou chose to enter the player names individually.\n"
                     "Don't worry if you mess up. Just keep going. You will be "
                     "able to edit it later.\n")
@@ -92,9 +128,9 @@ while start_program:
 
                 print(f'\nThere are a total {len(names)} people playing.\n')
                 for i, v in enumerate(names):
-                    print(f'{i}: {v}')
-                
+                    print(f'{i}: {v}')                
                 break
+
             # Handle invalid entries
             else:
                print('\nInvalid Entry.')
@@ -119,6 +155,30 @@ while start_program:
             # Handle invalid entries
             else:
                 print('\nInvalid Entry.')
+
+        # Option to save list as json file
+        saveornot = input("\n\nWould you like to save the Secret Santa list?\n"
+                          "Enter 'no' or 'yes':  ").strip()
+        
+        if saveornot == 'no':
+            print('\nOk!')
+        else:
+            cwd = os.getcwd()
+
+            # Account for Windows using differnt slashes
+            platos = platform.system()
+            if platos == 'Windows':
+                slash = '\\'
+            else:
+                slash = '/'
+            
+            year = str(datetime.now().year)
+            filename = cwd + slash + 'secretsanta-' + year +'.json'
+            path = Path(filename)
+            names_json = json.dumps(names)
+            path.write_text(names_json)
+
+            print(f'\n\nSecret Santa list saved to:  {filename}')
 
         # Secret Santa randomized assignments
         print("\n\nNow we are going to randomly assign Santas to Players. "
