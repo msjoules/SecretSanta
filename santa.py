@@ -18,13 +18,17 @@ class SecretSanta:
                 "Enter '2' to DELETE a player\n"
                 "Enter '3' to ADD a player\n"
                 "Enter '4' to PRINT ORIGINAL LIST of players\n"
-                "Enter '5' to PRINT UPDATED LIST of players -- you might want " 
-                "to do this prior to exiting\n"
+                "Enter '5' to PRINT UPDATED LIST of players\n"
                 "Enter '6' to make NO CHANGES\n"
                 "What is your choice?  "
                 ).strip()
             
             if make_changes == '6':
+                os.system('clear')
+                print(f'\nThere are a total {len(self.names)} people playing '
+                      'in the UPDATED LIST:')
+                for i, v in enumerate(self.names):
+                    print(f'{i}: {v}')
                 break                   
             elif make_changes == '1':
                 try:
