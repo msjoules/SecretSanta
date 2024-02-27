@@ -1,3 +1,5 @@
+import players
+
 class SecretSanta:
     # Initialize
     def __init__(self, names=None, santas=None, emails=None):
@@ -25,10 +27,10 @@ class SecretSanta:
             
             if make_changes == '6':
                 os.system('clear')
-                print(f'\nThere are a total {len(self.names)} people playing '
-                      'in the UPDATED LIST:')
-                for i, v in enumerate(self.names):
-                    print(f'{i}: {v}')
+                print('\n*------------------*'
+                    '\n* Names Finalized! *'
+                    '\n*------------------*')
+                players.print_names(self.names)
                 break                   
             elif make_changes == '1':
                 try:
@@ -43,6 +45,9 @@ class SecretSanta:
                         print('\nThe name cannot be blank.')
                     else:
                         self.names[int(edit_player)] = new_player.capitalize()
+                        # Handle an empty list
+                        if self.names == '':
+                            self.names[0] = new_player.capitalize()
                         print(f'\nPlayer number {edit_player} is now '
                               f'{new_player.capitalize()}.')
                 # Handle exception
@@ -74,16 +79,15 @@ class SecretSanta:
                     print('\nInvalid Entry for option 3')
             elif make_changes == '4':
                 os.system('clear')
-                print(f'\nThere are a total {len(original_list)} people playing '
-                      'in the ORIGINAL LIST:')
-                for i, v in enumerate(original_list):
-                    print(f'{i}: {v}')
+                print('ORIGINAL LIST\n'
+                      '-------------')
+                players.print_names(original_list)
+                
             elif make_changes == '5':
                 os.system('clear')
-                print(f'\nThere are a total {len(self.names)} people playing '
-                      'in the UPDATED LIST:')
-                for i, v in enumerate(self.names):
-                    print(f'{i}: {v}')
+                print('UPDATED LIST\n'
+                      '------------')
+                players.print_names(self.names)
 
         return self.names
 
@@ -183,42 +187,45 @@ class SecretSanta:
         from email.mime.text import MIMEText
 
         while True:
-            email_user = getpass.getpass(
-                prompt='Please enter your email (text hidden) or CTRL+C to abort: '
-                )
-            email_password = getpass.getpass(
-                prompt='Please enter your password (text hidden) or CTRL+C to abort: '
-                )
+            try:
+                email_user = getpass.getpass(
+                    prompt='Please enter your email (text hidden) or CTRL+C to abort: '
+                    )
+                email_password = getpass.getpass(
+                    prompt='Please enter your password (text hidden) or CTRL+C to abort: '
+                    )
+            except:
+                print('\nExiting...')
+                break
+            else:
+                # Set the email and password as environment variables
+                os.environ['EMAIL_USER'] = email_user
+                os.environ['EMAIL_PASSWORD'] = email_password
 
-            # Set the email and password as environment variables
-            os.environ['EMAIL_USER'] = email_user
-            os.environ['EMAIL_PASSWORD'] = email_password
+                # Ensure the server is closed after we're done
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    try:
+                        server.login(os.getenv('EMAIL_USER'), os.getenv('EMAIL_PASSWORD'))
 
-            # Ensure the server is closed after we're done
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.starttls()
-                try:
-                    server.login(os.getenv('EMAIL_USER'), os.getenv('EMAIL_PASSWORD'))
-
-                    for email, santa, name in zip(self.emails, self.santas, self.names):
-                        msg = MIMEMultipart()
-                        msg['From'] = os.getenv('EMAIL_USER')
-                        msg['To'] = email
-                        msg['Subject'] = 'Secret Santa'
-                        body = f'Hello {santa}!  You are the Secret Santa for {name}.'
-                        msg.attach(MIMEText(body, 'plain'))
-                        text = msg.as_string()
-                        try:
-                            server.sendmail(os.getenv('EMAIL_USER'), email, text)
-                        # Handle exception
-                        except:
-                            print(f"\nFailed to send email to {email}.")
-                    break
-                # Handle exception
-                except:
-                    print('\nIncorrect user credentials.')
-            
-
-        # Delete the environment variables
-        del os.environ['EMAIL_USER']
-        del os.environ['EMAIL_PASSWORD']
+                        for email, santa, name in zip(self.emails, self.santas, self.names):
+                            msg = MIMEMultipart()
+                            msg['From'] = os.getenv('EMAIL_USER')
+                            msg['To'] = email
+                            msg['Subject'] = 'Secret Santa'
+                            body = f'Hello {santa}!  You are the Secret Santa for {name}.'
+                            msg.attach(MIMEText(body, 'plain'))
+                            text = msg.as_string()
+                            try:
+                                server.sendmail(os.getenv('EMAIL_USER'), email, text)
+                            # Handle exception
+                            except:
+                                print(f"\nFailed to send email to {email}.")
+                        break
+                    # Handle exception
+                    except:
+                        print('\nIncorrect user credentials.')
+                
+            # Delete the environment variables
+            del os.environ['EMAIL_USER']
+            del os.environ['EMAIL_PASSWORD']

@@ -7,12 +7,9 @@ There are two ways you can get player names:
     2) Manually entering each player's name
 '''
 
-import pandas as pd
 import os
-import json
-import platform
-from datetime import datetime
-from pathlib import Path
+import players
+import pandas as pd
 from santa import SecretSanta 
 
 os.system('clear')
@@ -33,7 +30,7 @@ while start_program:
         print('''\n\nThere are three ways you can get player names:
         1) Generate names from an Excel document where each player has his/her own sheet
         2) Generate names from a json file
-        3) Manually entering each player name\n\n''')
+        3) Manually entering each player's name\n\n''')
         
         # Import player names or manually enter them
         while True:
@@ -45,98 +42,36 @@ while start_program:
             
             if player_entry == '4':
                 print('\nUser request to EXIT.')
+                # names = ''
                 start_program = False
                 break
-            
+
             # Option 1: Import names from Excel spreadsheet
-            elif player_entry == '1':             
-                filepath = input('\nEnter the complete path to the spreadsheet '
-                '(e.g., /home/user/secretsanta.xlsx or '
-                'C:\\Documents\\secretsanta.xlsx)\n'
-                'Path:  ').strip()
-
-                print(f'\nUser entered path to Excel document: {filepath}\n')
-                
-                if (filepath.startswith('"') and filepath.endswith('"')) or \
-                    (filepath.startswith("'") and filepath.endswith("'")):
-                    
-                    filepath = filepath[1:-1]
-                    
-                try:
-                    db = pd.ExcelFile(filepath)
-                # Handle exception
-                except:
-                    print('You must have entered something incorrectly.  '
-                          'Please verify the path and try again.')
-                else:
-                    names = db.sheet_names
-                    names = [names[i].capitalize() for i in range(len(names))]
-
-                    print(f'\nThere are a total {len(names)} people playing.\n')
-                    for i, v in enumerate(names):
-                        print(f'{i}: {v}')
-                    break
+            elif player_entry == '1':
+                names = players.excel_import()
+                break
 
             # Option 2: Import names from a json file
             elif player_entry == '2':             
-                filepath = input('\nEnter the complete path to the json file '
-                '(e.g., /home/user/secretsanta.json or '
-                'C:\\Documents\\secretsanta.json)\n'
-                'Path:  ').strip()
-
-                print(f'\nUser entered path to json file: {filepath}\n')
-                
-                if (filepath.startswith('"') and filepath.endswith('"')) or \
-                    (filepath.startswith("'") and filepath.endswith("'")):
-                    
-                    filepath = filepath[1:-1]
-                    
-                try:
-                    db = Path(filepath).read_text()
-                # Handle exception
-                except:
-                    print('You must have entered something incorrectly.  '
-                          'Please verify the path and try again.')
-                else:
-                    names = json.loads(db)
-                    names = [names[i].capitalize() for i in range(len(names))]
-
-                    print(f'\nThere are a total {len(names)} people playing.\n')
-                    for i, v in enumerate(names):
-                        print(f'{i}: {v}')
-                    break
+                names = players.json_import()
+                break
 
             # Option 3: Manually enter names        
             elif player_entry == '3':
-                print("\nYou chose to enter the player names individually.\n"
-                    "Don't worry if you mess up. Just keep going. You will be "
-                    "able to edit it later.\n")
-                names = []
-
-                while True:
-                    name = input("Please enter the player's name (Enter 'STOP' when"
-                                " done):  ").strip()
-                    
-                    if name.upper() == 'STOP':
-                        break
-                    # Handle blank entries
-                    elif name == '':
-                        print('The name cannot be blank.')
-                        continue
-                    else:
-                        names.append(name.capitalize())
-
-                print(f'\nThere are a total {len(names)} people playing.\n')
-                for i, v in enumerate(names):
-                    print(f'{i}: {v}')                
+                names = players.manual_entry()
                 break
 
             # Handle invalid entries
             else:
                print('\nInvalid Entry.')
-            
+           
         if not start_program:
             break
+
+        players.print_names(names)
+
+        # Instantiate Santa Class
+        santa = SecretSanta(names)
 
         # Allow changes if necessary
         while True:
@@ -149,36 +84,20 @@ while start_program:
                     '\n*------------------*')
                 break
             elif make_changes.lower() == 'yes':
-                santa = SecretSanta(names)
+                # santa = SecretSanta(names)
                 names = santa.edit_names()
                 break
             # Handle invalid entries
             else:
                 print('\nInvalid Entry.')
 
+        if not names:
+            print('\nNo names in list.')
+            start_program = False
+            break
+
         # Option to save list as json file
-        saveornot = input("\n\nWould you like to save the Secret Santa list?\n"
-                          "Enter 'no' or 'yes':  ").strip()
-        
-        if saveornot == 'no':
-            print('\nOk!')
-        else:
-            cwd = os.getcwd()
-
-            # Account for Windows using differnt slashes
-            platos = platform.system()
-            if platos == 'Windows':
-                slash = '\\'
-            else:
-                slash = '/'
-            
-            year = str(datetime.now().year)
-            filename = cwd + slash + 'secretsanta-' + year +'.json'
-            path = Path(filename)
-            names_json = json.dumps(names)
-            path.write_text(names_json)
-
-            print(f'\n\nSecret Santa list saved to:  {filename}')
+        players.save_players(names)
 
         # Secret Santa randomized assignments
         print("\n\nNow we are going to randomly assign Santas to Players. "
